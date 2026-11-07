@@ -1,0 +1,14 @@
+{
+  "name": "devops-requirement-verification",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pilot: acceptance-test PR gating. QA-written Given/When/Then tests must pass before a PR can merge.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "node --check src/cart.js",
+    "test:unit": "node --test \"tests/unit/**/*.test.js\"",
+    "test:acceptance": "node --test \"acceptance-tests/**/*.test.js\"",
+    "test": "npm run test:unit && npm run test:acceptance"
+  }
+}

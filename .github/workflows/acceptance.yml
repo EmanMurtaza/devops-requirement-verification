@@ -1,0 +1,42 @@
+name: acceptance-gate
+
+# Job names ("build", "ticket-check") are the status checks that branch protection requires.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # --- Swap these 3 steps for your stack, see docs/STACKS.md ---
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Acceptance tests (QA-owned, /acceptance-tests/)
+        run: npm run test:acceptance
+
+  ticket-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title must contain a ticket ID (e.g. PROJ-123)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if echo "$PR_TITLE" | grep -Eq '[A-Z][A-Z0-9]+-[0-9]+'; then
+            echo "Ticket ID found in title."
+          else
+            echo "::error::PR title must include a ticket ID like PROJ-123."
+            exit 1
+          fi
