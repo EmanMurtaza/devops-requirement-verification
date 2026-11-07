@@ -12,3 +12,27 @@ export function subtotal(items) {
 export function total(cart) {
   return subtotal(cart.items);
 }
+
+const CODES = {
+  SAVE10: { percent: 10, minSubtotal: 5000 },
+  EXPIRED20: { percent: 20, expiresAt: new Date('2025-12-31T23:59:59Z') },
+};
+
+/**
+ * PROJ-123: apply a discount code.
+ * @returns {{ok: true, total: number, discount: number} | {ok: false, reason: string, total: number}}
+ */
+export function applyDiscount(cart, rawCode, now = new Date()) {
+  const base = subtotal(cart.items);
+  const reject = (reason) => ({ ok: false, reason, total: base });
+
+  if (cart.discountCode) return reject('ALREADY_APPLIED');
+
+  const rule = CODES[String(rawCode).trim().toUpperCase()];
+  if (!rule) return reject('INVALID_CODE');
+  if (rule.expiresAt && now > rule.expiresAt) return reject('EXPIRED_CODE');
+  if (rule.minSubtotal && base < rule.minSubtotal) return reject('MIN_SUBTOTAL');
+
+  const discount = Math.round((base * rule.percent) / 100);
+  return { ok: true, total: base - discount, discount };
+}
